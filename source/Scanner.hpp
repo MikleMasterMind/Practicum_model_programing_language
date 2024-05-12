@@ -12,28 +12,27 @@
 
 namespace translator
 {
-    const int BUF_SIZE = 800;
 
     class Scanner
     {
         enum State {H, IDENT, NUMB, COM, ALE, DELIM, NEQ};
         State state;
-        static char* TW[];
-        static char* TD[];
-        static type_of_lex words[];
-        static type_of_lex dlms[];
+        static std::vector<std::string> TW;
+        static std::vector<std::string> TD;
+        static std::vector<type_of_lex> words;
+        static std::vector<type_of_lex> dlms;
         std::fstream file;
         char c;
-        char buf[BUF_SIZE];
-        int buf_top;
+        std::string buf;
+        bool record_flag;
 
         void clear();
         void add();
-        int look(const char* buf, char** list);
+        int look(const std::string buf, std::vector<std::string> list);
         void gc();
     
     public:
-        Lex get_lex(Table_id& TID); // дописать записи
+        Lex get_lex(Table_id& TID, std::string& record_name); // дописать записи
         Scanner(const std::string& program);
     };
 }

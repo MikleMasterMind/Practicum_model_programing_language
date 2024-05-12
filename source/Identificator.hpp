@@ -12,8 +12,7 @@ namespace translator
         bool declare;
         bool assign;
         type_of_lex type;
-        void* value;
-
+        int value;
     public:
         Identificator();
         std::string get_name() const;
@@ -24,8 +23,8 @@ namespace translator
         void set_assign();
         type_of_lex get_type() const;
         void set_type(type_of_lex type);
-        void* get_value() const;
-        void set_value(const void* value);
+        int get_value() const;
+        void set_value(int value);
     };
 }
 

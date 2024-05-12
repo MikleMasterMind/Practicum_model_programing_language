@@ -13,10 +13,10 @@ namespace translator
         LEX_BEGIN,
         LEX_END,
         LEX_VAR,
+        LEX_RECORD,
         LEX_ASSIGN,
         LEX_INT,
         LEX_BOOL,
-        LEX_RECORD,
         LEX_WRITE,
         LEX_READ,
         LEX_FIN,
@@ -31,6 +31,7 @@ namespace translator
         LEX_GTR,
         LEX_PLUS,
         LEX_MINUS,
+        LEX_UNARY_MINUS,
         LEX_TIMES,
         LEX_SLASH,
         LEX_SEMICOLON, // ";"
@@ -57,7 +58,6 @@ namespace translator
     {
         type_of_lex lex_t;
         int lex_id;
-
     public:
         Lex(type_of_lex type = LEX_NULL, int n = 0);
         type_of_lex get_type() const;

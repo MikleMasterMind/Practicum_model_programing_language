@@ -22,7 +22,7 @@ void translator::Executer::execute(translator::Poliz &prog, translator::Table_id
             case LEX_ID:
                 operand = cur.get_id();
                 if (TID[operand].get_assign())
-                    args.push(*(int*)TID[operand].get_value());
+                    args.push(TID[operand].get_value());
                 else
                     throw "Poliz_bad_indefinite";
                 break;
@@ -71,7 +71,7 @@ void translator::Executer::execute(translator::Poliz &prog, translator::Table_id
                         }
                     }
                 }
-                TID[operand].set_value(&k);
+                TID[operand].set_value(k);
                 TID[operand].set_assign();
                 break;
             case LEX_PLUS:
@@ -83,6 +83,9 @@ void translator::Executer::execute(translator::Poliz &prog, translator::Table_id
             case LEX_MINUS:
                 operand = args.pop();
                 args.push(args.pop() - operand);
+                break;
+            case LEX_UNARY_MINUS:
+                args.push(-args.pop());
                 break;
             case LEX_SLASH:
                 operand = args.pop();
@@ -115,7 +118,7 @@ void translator::Executer::execute(translator::Poliz &prog, translator::Table_id
             {
                 operand = args.pop();
                 int addres = args.pop();
-                TID[addres].set_value(&operand);
+                TID[addres].set_value(operand);
                 TID[addres].set_assign();
                 break;
             }

@@ -45,20 +45,17 @@ void translator::Identificator::set_type(translator::type_of_lex type)
     this->type = type;
 }
 
-void* translator::Identificator::get_value() const
+int translator::Identificator::get_value() const
 {
     return value;
 }
 
-void translator::Identificator::set_value(const void* value)
+void translator::Identificator::set_value(int value)
 {
     if (type == LEX_BOOL)
-        this->value = new bool(*(bool*)value);
+        this->value = value != 0;
     else if (type == LEX_INT)
-        this->value = new int(*(int*)value);
-    else if (type == LEX_RECORD)
-        // ...
-        this->value = NULL;
+        this->value = value;
     else 
         throw "bad_type";
 }

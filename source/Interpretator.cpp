@@ -1,6 +1,6 @@
 #include "Interpretator.hpp"
 
-translator::Interpretator::Interpretator(const char* program) : parser(program)
+translator::Interpretator::Interpretator(std::string program) : parser(program)
 {
 }
 

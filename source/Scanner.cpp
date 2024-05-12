@@ -5,7 +5,7 @@
 #include <iostream>
 #endif
 
-char* translator::Scanner::TW[] = 
+std::vector<std::string> translator::Scanner::TW = 
 {
     "",
     "and",
@@ -25,10 +25,11 @@ char* translator::Scanner::TW[] =
     "true",
     "var",
     "while",
-    "write"
+    "write",
+    "record"
 };
 
-char* translator::Scanner::TD[] =
+std::vector<std::string> translator::Scanner::TD =
 {
     "",
     "@",
@@ -50,7 +51,7 @@ char* translator::Scanner::TD[] =
     ">="
 };
 
-translator::type_of_lex translator::Scanner::words[] =
+std::vector<translator::type_of_lex> translator::Scanner::words =
 {
     LEX_NULL,
     LEX_AND,
@@ -71,10 +72,11 @@ translator::type_of_lex translator::Scanner::words[] =
     LEX_VAR,
     LEX_WHILE,
     LEX_WRITE,
+    LEX_RECORD,
     LEX_NULL
 };
 
-translator::type_of_lex translator::Scanner::dlms[] =
+std::vector<translator::type_of_lex> translator::Scanner::dlms =
 {
     LEX_NULL,
     LEX_FIN,
@@ -99,20 +101,18 @@ translator::type_of_lex translator::Scanner::dlms[] =
 
 void translator::Scanner::clear() 
 {
-    buf_top = 0;
-    for (int i = 0; i < BUF_SIZE; ++i) 
-        buf[i] = '\0';
+    buf.clear();
 }
 
 void translator::Scanner::add()
 {
-    buf[buf_top++] = c;
+    buf.push_back(c);
 }
 
-int translator::Scanner::look(const char *buf, char **list)
+int translator::Scanner::look(std::string buf, std::vector<std::string> list)
 {
-    for (int i = 0; list[i]; ++i)
-        if (!strncmp(buf, list[i], BUF_SIZE))
+    for (int i = 0; i < list.size(); ++i)
+        if (buf == list[i])
             return i;
     return 0;
 }
@@ -124,7 +124,7 @@ void translator::Scanner::gc()
         c = '@';
 }
 
-translator::Lex translator::Scanner::get_lex(translator::Table_id &TID)
+translator::Lex translator::Scanner::get_lex(translator::Table_id &TID, std::string &record_name)
 {
     int d, j;
     state = H;
@@ -168,7 +168,7 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID)
                 }
                 break;
             case IDENT:
-                if (isalpha(c) || isdigit(c)) {
+                if (isalpha(c) || isdigit(c) || c == '.') {
                     add();
                     gc();
                 }
@@ -176,11 +176,14 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID)
                     #ifdef DEBUG
                     std::cout << '|' << buf << '|' << std::endl;
                     #endif
-                    if (j = look(buf, TW)) { 
+                    record_name = buf;
+                    if (j = look(buf, TW)) {
+                        record_flag = words[j] == LEX_RECORD;
                         return Lex(words[j], j);
                     }
                     else {
-                        j = TID.push(buf);
+                        if (!record_flag) // don't save record name as identificator
+                            j = TID.push(buf);
                         return Lex(LEX_ID, j);
                     }
                 }
@@ -215,14 +218,14 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID)
                     gc();
                     j = look(buf, TD);
                     #ifdef DEBUG
-                    std::cout << '|' << "dlms[j]" << ' ' << j << '|' << std::endl;
+                    std::cout << '|' << buf << '|' << std::endl;
                     #endif
                     return Lex(dlms[j], j);
                 }
                 else {
                     j = look(buf, TD);
                     #ifdef DEBUG
-                    std::cout << '|' << "dlms[j]" << ' ' << j << '|' << std::endl;
+                    std::cout << '|' << buf << j << '|' << std::endl;
                     #endif
                     return Lex(dlms[j], j);
                 }
@@ -247,7 +250,7 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID)
                 if (j = look(buf, TD)) {
                     gc();
                     #ifdef DEBUG
-                    std::cout << '|' << "dlms[j]" << ' ' << j << '|' << std::endl;
+                    std::cout << '|' << buf << '|' << std::endl;
                     #endif
                     return Lex(dlms[j], j);
                 }
@@ -259,7 +262,7 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID)
     }
 }   
 
-translator::Scanner::Scanner(const std::string &program)
+translator::Scanner::Scanner(const std::string &program) : record_flag(false)
 {
     file.open(program);
     state = H;

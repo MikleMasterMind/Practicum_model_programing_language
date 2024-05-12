@@ -6,6 +6,9 @@
 #include "Poliz.hpp"
 #include "Stack.hpp"
 #include "Table_id.hpp"
+#include <string>
+#include <map>
+#include <stack>
 
 namespace translator 
 {
@@ -15,10 +18,15 @@ namespace translator
         Lex cur_lex; // текущая лексема
         Scanner scan;
         Stack<int> st_int;
+        Stack<std::string> st_str;
+        std::string record_name;
+        std::map<std::string, std::vector<std::pair<std::string, type_of_lex>>> record_table;
         Stack<type_of_lex> st_lex;
         Table_id TID;
         // процедуры РС-метода
         void Prog(); 
+        void BeforeRec();
+        void Rec(std::vector<std::pair<std::string, type_of_lex>>& fields);
         void BeforeDecl();
         void Decl();
         void Begin();
@@ -29,6 +37,7 @@ namespace translator
         void Logic();
         // семантичиеские действия
         void declare(type_of_lex type);
+        void declare_record(std::string record);
         void check_id();
         void check_op();
         void check_not();
@@ -40,7 +49,7 @@ namespace translator
         
     public:
         Poliz prog; // внутреннее представление программы
-        Parser(const char *program);
+        Parser(std::string program);
         void analyze(); // анализатор с действиями
         Table_id& get_tid();
     };

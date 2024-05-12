@@ -16,5 +16,5 @@ $(TARGET) : $(OBJ)
 $(PREF_OBJ)%.o : $(PREF_SRC)%.cpp
 	$(COMPILER) $(FLAGS) -c $< -o $@
 
-clean :
+clear :
 	rm $(TARGET) $(PREF_OBJ)*.o

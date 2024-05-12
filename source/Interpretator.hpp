@@ -12,7 +12,7 @@ namespace translator
         Parser parser;
         Executer executer;
     public:
-        Interpretator(const char* program);
+        Interpretator(std::string program);
         void intetretate();
     };
 }
