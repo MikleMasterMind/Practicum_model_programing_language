@@ -124,7 +124,7 @@ void translator::Scanner::gc()
         c = '@';
 }
 
-translator::Lex translator::Scanner::get_lex(translator::Table_id &TID, std::string &record_name)
+translator::Lex translator::Scanner::get_lex(std::string &record_name)
 {
     int d, j;
     state = H;
@@ -178,13 +178,10 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID, std::str
                     #endif
                     record_name = buf;
                     if (j = look(buf, TW)) {
-                        record_flag = words[j] == LEX_RECORD;
                         return Lex(words[j], j);
                     }
                     else {
-                        if (!record_flag) // don't save record name as identificator
-                            j = TID.push(buf);
-                        return Lex(LEX_ID, j);
+                        return Lex(LEX_ID, 0);
                     }
                 }
                 break;
@@ -225,7 +222,7 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID, std::str
                 else {
                     j = look(buf, TD);
                     #ifdef DEBUG
-                    std::cout << '|' << buf << j << '|' << std::endl;
+                    std::cout << '|' << buf << '|' << std::endl;
                     #endif
                     return Lex(dlms[j], j);
                 }
@@ -262,7 +259,7 @@ translator::Lex translator::Scanner::get_lex(translator::Table_id &TID, std::str
     }
 }   
 
-translator::Scanner::Scanner(const std::string &program) : record_flag(false)
+translator::Scanner::Scanner(const std::string &program)
 {
     file.open(program);
     state = H;

@@ -15,6 +15,8 @@ namespace translator
         void reset()
         {
             top = -1;
+            container.clear();
+            container.shrink_to_fit();
         }
         void push(T elem)
         {

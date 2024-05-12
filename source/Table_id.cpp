@@ -26,3 +26,8 @@ int translator::Table_id::push(std::string lex_name)
     container.push_back(buf);
     return container.size() - 1;
 }
+
+int translator::Table_id::size() const
+{
+    return container.size();
+}

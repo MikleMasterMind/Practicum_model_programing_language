@@ -23,6 +23,7 @@ namespace translator
         std::map<std::string, std::vector<std::pair<std::string, type_of_lex>>> record_table;
         Stack<type_of_lex> st_lex;
         Table_id TID;
+        bool record_flag;
         // процедуры РС-метода
         void Prog(); 
         void BeforeRec();
@@ -44,7 +45,12 @@ namespace translator
         void eq_type();
         void eq_bool();
         void check_id_in_read();
-        //
+        void record_assign(std::string dest, std::string src);
+        // auxiliary functions
+        std::string get_prefix(std::string str);
+        std::string get_postfix(std::string str);
+        std::vector<Identificator> find_fields(std::string prefix);
+        bool is_record(std::string var);
         void get_lex(); // получить очередную лексему
         
     public:

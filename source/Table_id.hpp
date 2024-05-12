@@ -15,6 +15,7 @@ namespace translator
         Identificator operator[](int index) const;
         Identificator& operator[](int index);
         int push(std::string lex_name);
+        int size() const;
     };
 }
 

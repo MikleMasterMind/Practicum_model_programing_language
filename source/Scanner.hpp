@@ -24,7 +24,6 @@ namespace translator
         std::fstream file;
         char c;
         std::string buf;
-        bool record_flag;
 
         void clear();
         void add();
@@ -32,7 +31,7 @@ namespace translator
         void gc();
     
     public:
-        Lex get_lex(Table_id& TID, std::string& record_name); // дописать записи
+        Lex get_lex(std::string& record_name); // дописать записи
         Scanner(const std::string& program);
     };
 }

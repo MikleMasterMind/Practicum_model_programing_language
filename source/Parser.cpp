@@ -11,13 +11,19 @@ void translator::Parser::Prog()
         get_lex();
     else
         throw cur_lex;
+    record_flag = true;
     while (cur_lex.get_type() == LEX_RECORD)
         BeforeRec();
+    record_flag = false;
     BeforeDecl();
     if (cur_lex.get_type() == LEX_SEMICOLON)
         get_lex ();
     else
         throw cur_lex;
+    #ifdef DEBUG
+    for (int i = 0; i < TID.size(); ++i)
+        std::cout << TID[i].get_name() << ' ' << TID[i].get_type() << std::endl;
+    #endif
     Begin();
     if (cur_lex.get_type() != LEX_FIN)
         throw cur_lex;
@@ -94,9 +100,15 @@ void translator::Parser::BeforeDecl()
     if (cur_lex.get_type() == LEX_VAR) {
         get_lex();
         Decl();
+        #ifdef DEBUG
+            std::cout << "here1" << std::endl;
+        #endif
         while (cur_lex.get_type() == LEX_COMMA) { // ","
             get_lex();
             Decl();
+            #ifdef DEBUG
+                std::cout << "here" << std::endl;
+            #endif
         }
     }
     else {
@@ -125,10 +137,16 @@ void translator::Parser::Decl()
         throw cur_lex;
     get_lex();
     if (cur_lex.get_type() == LEX_INT || cur_lex.get_type() == LEX_BOOL) {
+        #ifdef DEBUG
+            std::cout << cur_lex << std::endl;
+        #endif
         declare(cur_lex.get_type());
         get_lex();
     }
     else if (record_table.count(record_name)) {
+        #ifdef DEBUG
+            std::cout << record_name << std::endl;
+        #endif
         declare_record(record_name);
         get_lex();
     }
@@ -170,6 +188,9 @@ void translator::Parser::Master()
         if (cur_lex.get_type() == LEX_THEN) {
             get_lex();
             Master();
+            if (cur_lex.get_type() != LEX_SEMICOLON)
+                throw cur_lex;
+            get_lex();
             pl3 = prog.get_carrier();
             prog.blank();
             prog.push_lex(Lex(POLIZ_GO));
@@ -248,17 +269,27 @@ void translator::Parser::Master()
         }
     } // end LEX_WRITE
     else if (cur_lex.get_type() == LEX_ID) {
-        check_id();
-        prog.push_lex(Lex(POLIZ_ADDRESS, cur_lex.get_id()));
-        get_lex();
-        if (cur_lex.get_type() == LEX_ASSIGN) {
+        if (is_record(record_name)) { // specal assigment for record
+            std::string dest_prefix = record_name;
+            get_lex();
+            if (cur_lex.get_type() != LEX_ASSIGN) 
+                throw cur_lex;
+            get_lex();
+            if (cur_lex.get_type() != LEX_ID || !is_record(record_name))
+                throw cur_lex;
+            std::string src_prefix = record_name;
+            record_assign(dest_prefix, src_prefix);
+            get_lex();
+        } else { // usual var assigment
+            check_id();
+            prog.push_lex(Lex(POLIZ_ADDRESS, cur_lex.get_id()));
+            get_lex();
+            if (cur_lex.get_type() != LEX_ASSIGN)
+                throw cur_lex;
             get_lex();
             Equation();
             eq_type();
             prog.push_lex(Lex(LEX_ASSIGN));
-        }
-        else {
-            throw cur_lex;
         }
     } // end LEX_ID
     else if (cur_lex.get_type() == LEX_END) {
@@ -374,7 +405,7 @@ void translator::Parser::declare(translator::type_of_lex type)
         else {
             TID[i].set_declare();
             TID[i].set_type(type);
-        }      
+        }  
     }
 }
 
@@ -383,14 +414,18 @@ void translator::Parser::declare_record(std::string record)
     while (!st_str.empty()) {
         std::string prefix = st_str.pop();
         #ifdef DEBUG
-            std::cout << prefix << std::endl;
+            std::cout << "declare_record " << prefix << std::endl;
         #endif
+        int index = TID.push(prefix);
+        TID[index].set_declare();
+        TID[index].set_type(LEX_RECORD);
         for (auto a : record_table[record]) {
             std::string postfix = a.first;
             std::string var = prefix + '.' + postfix;
             int index = TID.push(var);
             TID[index].set_type(a.second);
             TID[index].set_declare();
+            
         }
     }
 }
@@ -449,9 +484,82 @@ void translator::Parser::check_id_in_read()
         throw "not_declared";
 }
 
+void translator::Parser::record_assign(std::string dest, std::string src)
+{
+    
+    std::vector<Identificator> dest_list = find_fields(dest);
+    std::vector<Identificator> src_list = find_fields(src);
+    if (dest_list.size() != src_list.size())
+        throw "assign different reports";
+    for (int i = 0; i < dest_list.size(); ++i) {
+        if (get_postfix(dest_list[i].get_name()) != get_postfix(src_list[i].get_name()) || dest_list[i].get_type() != src_list[i].get_type())
+            throw "assign different reports";
+        int dest_id = TID.push(dest_list[i].get_name());
+        int src_id = TID.push(src_list[i].get_name());
+        prog.push_lex(Lex(POLIZ_ADDRESS, dest_id));
+        prog.push_lex(Lex(LEX_ID, src_id));
+        prog.push_lex(Lex(LEX_ASSIGN));
+    }
+}
+
+std::string translator::Parser::get_prefix(std::string str)
+{
+    std::string result;
+    for (auto c : str) {
+        if (c == '.')
+            break;
+        result += c;
+    }
+    return result;
+}
+
+std::string translator::Parser::get_postfix(std::string str)
+{
+    std::string result;
+    int i;
+    for (i = 0; i < str.length(); ++i)
+        if (str[i] == '.') {
+            ++i;
+            break;
+        }
+    for (; i < str.length(); ++i)
+        result += str[i];
+    return result;
+}
+
+std::vector<translator::Identificator> translator::Parser::find_fields(std::string prefix)
+{
+    std::vector<translator::Identificator> result;
+    for (int i = 0; i < TID.size(); ++i)
+        if (get_prefix(TID[i].get_name()) == prefix && TID[i].get_name() != prefix)
+            result.push_back(TID[i]);
+    return result;
+}
+
+bool translator::Parser::is_record(std::string var)
+{
+//     if (var.find('.') != std::string::npos)
+//         return false;
+    std::vector<translator::Identificator> buf = find_fields(var);
+    #ifdef DEBUG
+    std::cout << var << std::endl;
+    for (auto a : buf)
+        std::cout << a.get_name() << std::endl;
+    #endif
+    for (auto a : buf)
+        if (a.get_name().find('.') != std::string::npos)
+            return true;
+    return false;
+}
+
 void translator::Parser::get_lex()
 {
-    cur_lex = scan.get_lex(TID, record_name);
+    std::string buf = record_name;
+    cur_lex = scan.get_lex(record_name);
+    if (cur_lex.get_type() == LEX_ID && !record_flag && !record_table.count(record_name))
+        cur_lex = Lex(LEX_ID, TID.push(record_name));
+    else if (buf == record_name)
+        record_name = "";
 }
 
 translator::Parser::Parser(std::string program) : scan(program)
@@ -462,7 +570,7 @@ void translator::Parser::analyze()
 {
     get_lex();
     Prog();
-    prog.print();
+    //prog.print();
 }
 
 translator::Table_id &translator::Parser::get_tid()
